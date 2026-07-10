@@ -29,21 +29,21 @@ class User(Base):
     )
 
     username = Column(
-        String,
+        String(100),
         unique=True,
         index=True,
         nullable=False
     )
 
     email = Column(
-        String,
+        String(255),
         unique=True,
         index=True,
         nullable=False
     )
 
     password = Column(
-        String,
+        String(255),
         nullable=False
     )
 
@@ -75,7 +75,7 @@ class ChatSession(Base):
     )
 
     title = Column(
-        String,
+        String(255),
         default="New Chat"
     )
 
@@ -117,7 +117,7 @@ class ChatMessage(Base):
     )
 
     sender = Column(
-        String,
+        String(10),
         nullable=False
     )
 
@@ -134,4 +134,4 @@ class ChatMessage(Base):
     session = relationship(
         "ChatSession",
         back_populates="messages"
-    )
+    )
