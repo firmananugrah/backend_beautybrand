@@ -590,3 +590,48 @@ def get_skin_profile(user_id: int):
     finally:
 
         db.close()
+
+
+# =====================================
+# GET PROFILE USER LENGKAP
+# Menggabungkan data user + skin profile
+# =====================================
+
+@app.get("/profile/{user_id}")
+def get_profile(user_id: int):
+
+    db = SessionLocal()
+
+    try:
+
+        # Ambil data user
+        user = db.query(User).filter(
+            User.id == user_id
+        ).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="User tidak ditemukan."
+            )
+
+        # Ambil skin profile (bisa None jika belum pernah analisis)
+        skin = db.query(UserSkinProfile).filter(
+            UserSkinProfile.user_id == user_id
+        ).first()
+
+        return {
+            "status": True,
+            "user"  : {
+                "id"               : user.id,
+                "username"         : user.username,
+                "email"            : user.email,
+                "jenis_kulit"      : skin.skin_type if skin else None,
+                "masalah_kulit"    : skin.skin_problem if skin else None,
+                "tanggal_analisis" : skin.analysis_date.isoformat() if skin and skin.analysis_date else None
+            }
+        }
+
+    finally:
+
+        db.close()
