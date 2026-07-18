@@ -7,7 +7,8 @@ from app.schemas import (
     UserRegister,
     UserLogin,
     SaveChatRequest,
-    RenameSessionRequest
+    RenameSessionRequest,
+    SaveSkinProfileRequest
 )
 
 from app.recommender import get_recommendation
@@ -22,8 +23,11 @@ from app.database import (
 from app.auth import (
     User,
     ChatSession,
-    ChatMessage
+    ChatMessage,
+    UserSkinProfile
 )
+
+from app.skin_profile_service import upsert_skin_profile
 
 from app.security import (
     hash_password,
@@ -502,7 +506,7 @@ def recommend(data: ChatRequest):
 def chat(data: ChatRequest):
 
     try:
-        return process_chat(data.message)
+        return process_chat(data.message, user_id=data.user_id)
 
     except Exception as e:
         traceback.print_exc()
@@ -512,3 +516,77 @@ def chat(data: ChatRequest):
         )
 
 
+# =====================================
+# SAVE SKIN PROFILE (UPSERT)
+# INSERT jika belum ada, UPDATE jika sudah
+# =====================================
+
+@app.post("/save-skin-profile")
+def save_skin_profile(data: SaveSkinProfileRequest):
+
+    db = SessionLocal()
+
+    try:
+
+        # Validasi user
+        user = db.query(User).filter(
+            User.id == data.user_id
+        ).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="User tidak ditemukan."
+            )
+
+    finally:
+        db.close()
+
+    # Upsert melalui service
+    result = upsert_skin_profile(
+        user_id      = data.user_id,
+        skin_type    = data.skin_type,
+        skin_problem = data.skin_problem or ""
+    )
+
+    return {
+        "status" : True,
+        "message": "Profil kulit berhasil disimpan.",
+        "data"   : result
+    }
+
+
+# =====================================
+# GET SKIN PROFILE
+# =====================================
+
+@app.get("/skin-profile/{user_id}")
+def get_skin_profile(user_id: int):
+
+    db = SessionLocal()
+
+    try:
+
+        profile = db.query(UserSkinProfile).filter(
+            UserSkinProfile.user_id == user_id
+        ).first()
+
+        if not profile:
+            return {
+                "status" : False,
+                "message": "Belum pernah melakukan analisis kulit."
+            }
+
+        return {
+            "status": True,
+            "data"  : {
+                "skin_type"    : profile.skin_type,
+                "skin_problem" : profile.skin_problem,
+                "analysis_date": profile.analysis_date.isoformat() if profile.analysis_date else None,
+                "updated_at"   : profile.updated_at.isoformat() if profile.updated_at else None
+            }
+        }
+
+    finally:
+
+        db.close()

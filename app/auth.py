@@ -53,6 +53,13 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    skin_profile = relationship(
+        "UserSkinProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
 
 # =====================================================
 # CHAT SESSION
@@ -134,4 +141,55 @@ class ChatMessage(Base):
     session = relationship(
         "ChatSession",
         back_populates="messages"
-    )
+    )
+
+
+# =====================================================
+# USER SKIN PROFILE
+# Satu user hanya memiliki satu profil kulit.
+# Jika analisis diulang, data lama diupdate (upsert).
+# =====================================================
+
+class UserSkinProfile(Base):
+
+    __tablename__ = "user_skin_profiles"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        unique=True,       # Satu user = satu profil
+        nullable=False
+    )
+
+    skin_type = Column(
+        String(100),
+        nullable=False
+    )
+
+    skin_problem = Column(
+        String(255),
+        nullable=True
+    )
+
+    analysis_date = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    user = relationship(
+        "User",
+        back_populates="skin_profile"
+    )
+

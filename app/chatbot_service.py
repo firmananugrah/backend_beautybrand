@@ -12,6 +12,7 @@ from app.conversation_manager import (
 
 from app.skin_analyzer import analyze_skin
 from app.recommender import get_recommendation
+from app.skin_profile_service import upsert_skin_profile
 
 
 # =====================================
@@ -120,7 +121,7 @@ def build_query(analysis, answers):
 # PROCESS CHAT
 # =====================================
 
-def process_chat(message):
+def process_chat(message, user_id: int = None):
 
     message = message.strip()
 
@@ -245,6 +246,22 @@ Jawab HANYA JSON.
             recommendations = get_recommendation(
                 fallback_query
             )
+
+        # =====================================
+        # SIMPAN SKIN PROFILE OTOMATIS
+        # Jika user_id diberikan dan analisis valid
+        # =====================================
+
+        if user_id and analysis.get("jenis_kulit"):
+
+            try:
+                upsert_skin_profile(
+                    user_id      = user_id,
+                    skin_type    = analysis.get("jenis_kulit", ""),
+                    skin_problem = analysis.get("masalah_kulit", "")
+                )
+            except Exception:
+                pass  # Jangan gagalkan response chatbot jika simpan profil error
 
         # =====================================
         # END SESSION

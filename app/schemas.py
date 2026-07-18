@@ -8,6 +8,7 @@ from typing import List, Optional
 
 class ChatRequest(BaseModel):
     message: str
+    user_id: Optional[int] = None   # Opsional — dikirim frontend saat user sudah login
 
 
 class ChatResponse(BaseModel):
@@ -88,4 +89,26 @@ class ChatHistoryResponse(BaseModel):
 
 
 class RenameSessionRequest(BaseModel):
-    title: str
+    title: str
+
+
+# ==========================
+# SKIN PROFILE
+# ==========================
+
+class SaveSkinProfileRequest(BaseModel):
+    user_id: int
+    skin_type: str
+    skin_problem: Optional[str] = ""
+
+
+class SkinProfileResponse(BaseModel):
+    id: int
+    user_id: int
+    skin_type: str
+    skin_problem: Optional[str]
+    analysis_date: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
