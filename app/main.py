@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base
@@ -56,11 +57,21 @@ app = FastAPI(
 
 # =====================================
 # CORS
+# allow_origins=["*"] tidak bisa dipakai
+# bersamaan dengan allow_credentials=True.
+# Gunakan daftar origin spesifik dari .env
 # =====================================
+
+_raw_origins = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:3000,http://localhost:5173,http://localhost:5174"
+)
+
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
